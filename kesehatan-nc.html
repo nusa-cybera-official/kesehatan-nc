@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>KESEHATAN NC — Real-Time Health</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{--cyan:#00f5ff;--orange:#ff6b00;--red:#ff2244;--green:#00ff88;--pink:#ff69b4;--purple:#9b59b6;--dark:#020810;--dark2:#050f1a;--dark3:#0a1628;--border:rgba(0,245,255,0.2);--glass:rgba(0,245,255,0.05);--text:#a0c4d8;--white:#e0f4ff;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{background:var(--dark);color:var(--white);font-family:'Rajdhani',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,245,255,0.01) 2px,rgba(0,245,255,0.01) 4px);pointer-events:none;z-index:9999;}
+.bg-grid{position:fixed;top:0;left:0;width:100%;height:100%;background-image:linear-gradient(rgba(0,245,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,0.03) 1px,transparent 1px);background-size:50px 50px;pointer-events:none;z-index:0;}
+
+.wrap{position:relative;z-index:1;max-width:500px;margin:0 auto;padding:16px 14px 50px;}
+
+/* HEADER */
+.header{text-align:center;padding:24px 0 20px;}
+.logo{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;color:var(--cyan);text-shadow:0 0 20px rgba(0,245,255,0.5);letter-spacing:2px;}
+.logo span{color:var(--green);}
+.header-sub{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text);margin-top:4px;letter-spacing:1px;}
+
+/* TABS */
+.tab-scroll{display:flex;gap:6px;overflow-x:auto;margin-bottom:18px;padding-bottom:4px;scrollbar-width:none;}
+.tab-scroll::-webkit-scrollbar{display:none;}
+.tab-btn{flex-shrink:0;padding:8px 14px;border:1px solid var(--border);border-radius:20px;background:transparent;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:10px;cursor:pointer;transition:all .3s;white-space:nowrap;}
+.tab-btn.active{background:var(--glass);border-color:var(--cyan);color:var(--cyan);}
+
+/* SECTIONS */
+.section{display:none;animation:fadeIn .3s ease;}
+.section.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* CARD */
+.card{background:var(--dark2);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.card.green::before{background:linear-gradient(90deg,transparent,var(--green),transparent);}
+.card.red::before{background:linear-gradient(90deg,transparent,var(--red),transparent);}
+.card.orange::before{background:linear-gradient(90deg,transparent,var(--orange),transparent);}
+.card.purple::before{background:linear-gradient(90deg,transparent,var(--purple),transparent);}
+.card.pink::before{background:linear-gradient(90deg,transparent,var(--pink),transparent);}
+.card.cyan::before{background:linear-gradient(90deg,transparent,var(--cyan),transparent);}
+.card-title{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;color:var(--white);margin-bottom:6px;}
+.card-sub{font-size:11px;color:var(--text);font-family:'Share Tech Mono',monospace;margin-bottom:14px;}
+
+/* FORM */
+.form-group{margin-bottom:12px;}
+.form-label{font-size:11px;color:var(--text);font-family:'Share Tech Mono',monospace;margin-bottom:5px;display:block;}
+.form-input{width:100%;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--white);font-family:'Rajdhani',sans-serif;font-size:14px;outline:none;transition:all .3s;}
+.form-input:focus{border-color:var(--cyan);}
+select.form-input{cursor:pointer;}
+select.form-input option{background:var(--dark2);}
+.btn{width:100%;padding:12px;border-radius:8px;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:2px;transition:all .3s;border:none;margin-top:4px;}
+.btn-cyan{background:linear-gradient(135deg,rgba(0,245,255,0.2),rgba(0,245,255,0.05));border:1px solid var(--cyan)!important;color:var(--cyan);}
+.btn-green{background:linear-gradient(135deg,rgba(0,255,136,0.2),rgba(0,255,136,0.05));border:1px solid var(--green)!important;color:var(--green);}
+.btn-red{background:linear-gradient(135deg,rgba(255,34,68,0.2),rgba(255,34,68,0.05));border:1px solid var(--red)!important;color:var(--red);}
+.btn-orange{background:linear-gradient(135deg,rgba(255,107,0,0.2),rgba(255,107,0,0.05));border:1px solid var(--orange)!important;color:var(--orange);}
+
+/* RESULT BOX */
+.result-box{background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:12px;display:none;}
+.result-box.show{display:block;animation:fadeIn .3s ease;}
+.result-num{font-family:'Orbitron',sans-serif;font-size:32px;font-weight:900;text-align:center;margin-bottom:4px;}
+.result-label{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text);text-align:center;margin-bottom:10px;}
+.result-status{text-align:center;padding:8px 16px;border-radius:20px;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;display:inline-block;letter-spacing:1px;}
+.result-center{text-align:center;}
+.result-desc{font-size:13px;color:var(--text);margin-top:10px;line-height:1.6;padding:10px;background:rgba(0,0,0,0.2);border-radius:8px;}
+
+/* HEART RATE */
+.hr-circle{width:160px;height:160px;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;flex-direction:column;border:3px solid rgba(255,34,68,0.3);position:relative;background:rgba(255,34,68,0.04);cursor:pointer;transition:all .3s;user-select:none;}
+.hr-circle.active{border-color:var(--red);box-shadow:0 0 30px rgba(255,34,68,0.3);animation:heartbeat 1s infinite;}
+@keyframes heartbeat{0%,100%{transform:scale(1);}50%{transform:scale(1.05);}}
+.hr-icon{font-size:40px;margin-bottom:4px;}
+.hr-bpm{font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900;color:var(--red);}
+.hr-label{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text);}
+.hr-wave{width:100%;height:60px;margin:10px 0;}
+.hr-instruction{text-align:center;font-size:12px;color:var(--text);font-family:'Share Tech Mono',monospace;margin-bottom:10px;line-height:1.6;}
+.camera-view{width:100%;height:120px;border-radius:10px;background:var(--dark3);border:1px solid var(--border);margin-bottom:10px;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;}
+.camera-view video{width:100%;height:100%;object-fit:cover;border-radius:10px;}
+.camera-overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:60px;height:60px;border-radius:50%;border:3px dashed var(--red);animation:spin 3s linear infinite;}
+@keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg);}}
+.camera-hint{font-size:11px;color:var(--text);font-family:'Share Tech Mono',monospace;}
+
+/* STRESS */
+.stress-pad{width:100%;height:180px;border-radius:14px;background:var(--dark3);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;cursor:pointer;transition:all .3s;user-select:none;-webkit-user-select:none;}
+.stress-pad:active,.stress-pad.pressing{background:rgba(155,89,182,0.1);border-color:var(--purple);box-shadow:0 0 20px rgba(155,89,182,0.2);}
+.stress-pad-text{font-family:'Orbitron',sans-serif;font-size:13px;color:var(--text);letter-spacing:2px;}
+.stress-pad-sub{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text);}
+.stress-meter{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:12px 0;}
+.stress-bar{height:40px;border-radius:4px;background:var(--dark3);border:1px solid var(--border);transition:all .5s;position:relative;overflow:hidden;}
+.stress-bar.fill{background:linear-gradient(180deg,var(--purple),rgba(155,89,182,0.3));}
+.stress-label-row{display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text);margin-bottom:10px;}
+
+/* BMI */
+.bmi-scale{width:100%;height:12px;border-radius:6px;background:linear-gradient(90deg,#3498db,#2ecc71,#f39c12,#e74c3c,#c0392b);margin:10px 0;position:relative;}
+.bmi-marker{position:absolute;top:-4px;width:20px;height:20px;border-radius:50%;background:var(--white);border:3px solid var(--dark);transform:translateX(-50%);transition:left .5s;box-shadow:0 0 10px rgba(0,0,0,0.5);}
+.bmi-labels{display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text);margin-top:6px;}
+
+/* KALORI */
+.macro-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
+.macro-box{background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;}
+.macro-num{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:700;}
+.macro-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text);margin-top:2px;}
+.calori-circle{width:130px;height:130px;border-radius:50%;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;flex-direction:column;border:4px solid var(--orange);background:rgba(255,107,0,0.05);}
+.calori-num{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;color:var(--orange);}
+.calori-sub{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text);}
+
+/* TIPS */
+.tip-card{background:var(--dark3);border-radius:10px;padding:16px;margin-bottom:10px;border:1px solid var(--border);position:relative;overflow:hidden;}
+.tip-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
+.tip-card.green::before{background:var(--green);}
+.tip-card.cyan::before{background:var(--cyan);}
+.tip-card.orange::before{background:var(--orange);}
+.tip-card.pink::before{background:var(--pink);}
+.tip-category{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;margin-bottom:6px;}
+.tip-card.green .tip-category{color:var(--green);}
+.tip-card.cyan .tip-category{color:var(--cyan);}
+.tip-card.orange .tip-category{color:var(--orange);}
+.tip-card.pink .tip-category{color:var(--pink);}
+.tip-text{font-size:14px;color:var(--white);line-height:1.6;}
+.tip-icon{font-size:24px;margin-bottom:8px;}
+.refresh-btn{width:100%;background:var(--glass);border:1px solid var(--border);color:var(--cyan);padding:12px;border-radius:8px;font-family:'Orbitron',sans-serif;font-size:10px;cursor:pointer;letter-spacing:2px;margin-bottom:14px;}
+
+/* SVG WAVE */
+.wave-container{background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:10px;margin:10px 0;height:70px;overflow:hidden;}
+
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--dark3);border:1px solid var(--cyan);color:var(--cyan);padding:8px 18px;border-radius:20px;font-family:'Share Tech Mono',monospace;font-size:11px;z-index:9998;opacity:0;transition:opacity .3s;white-space:nowrap;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div id="toast" class="toast"></div>
+
+<div class="wrap">
+  <div class="header">
+    <div class="logo">KESEHATAN<span>NC</span></div>
+    <div class="header-sub">// REAL-TIME HEALTH MONITORING SYSTEM</div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tab-scroll">
+    <button class="tab-btn active" onclick="switchTab('jantung',this)">❤️ JANTUNG</button>
+    <button class="tab-btn" onclick="switchTab('stres',this)">🧠 STRES</button>
+    <button class="tab-btn" onclick="switchTab('bmi',this)">⚖️ BMI</button>
+    <button class="tab-btn" onclick="switchTab('kalori',this)">🔥 KALORI</button>
+    <button class="tab-btn" onclick="switchTab('tips',this)">💡 TIPS</button>
+  </div>
+
+  <!-- DETAK JANTUNG -->
+  <div class="section active" id="sectionJantung">
+    <div class="card red">
+      <div class="card-title">❤️ MONITOR DETAK JANTUNG</div>
+      <div class="card-sub">// Tempel jari ke kamera belakang HP kamu</div>
+      <div class="hr-instruction">
+        1. Tap tombol MULAI di bawah<br>
+        2. Izinkan akses kamera<br>
+        3. Tempel ujung jari ke kamera + flash<br>
+        4. Tahan diam selama 30 detik
+      </div>
+      <div class="camera-view" id="cameraView">
+        <div class="camera-overlay" id="cameraOverlay" style="display:none;"></div>
+        <div class="camera-hint" id="cameraHint">📷 Kamera belum aktif</div>
+        <video id="videoEl" autoplay playsinline muted style="display:none;"></video>
+        <canvas id="canvasEl" style="display:none;"></canvas>
+      </div>
+      <div class="hr-circle" id="hrCircle" onclick="toggleHR()">
+        <div class="hr-icon">❤️</div>
+        <div class="hr-bpm" id="hrBpm">--</div>
+        <div class="hr-label">BPM</div>
+      </div>
+      <div class="wave-container">
+        <svg id="hrWave" width="100%" height="50" viewBox="0 0 300 50" preserveAspectRatio="none">
+          <polyline id="hrLine" points="0,25" fill="none" stroke="#ff2244" stroke-width="2"/>
+        </svg>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-green" onclick="startHR()" id="btnStartHR">▶ MULAI UKUR</button>
+        <button class="btn btn-red" onclick="stopHR()" id="btnStopHR" style="display:none;">⏹ BERHENTI</button>
+      </div>
+      <div class="result-box" id="hrResult">
+        <div class="result-num" id="hrFinalBpm" style="color:var(--red);">--</div>
+        <div class="result-label">DETAK JANTUNG / MENIT</div>
+        <div class="result-center">
+          <span class="result-status" id="hrStatusBadge">--</span>
+        </div>
+        <div class="result-desc" id="hrDesc"></div>
+      </div>
+    </div>
+
+    <div class="card cyan">
+      <div class="card-title">📊 REFERENSI DETAK JANTUNG NORMAL</div>
+      <div style="display:grid;gap:8px;margin-top:4px;">
+        <div style="display:flex;justify-content:space-between;padding:8px;background:var(--dark3);border-radius:6px;border:1px solid var(--border);font-size:12px;"><span>Bayi (0-1 tahun)</span><span style="color:var(--cyan);font-family:'Share Tech Mono',monospace;">100-160 BPM</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px;background:var(--dark3);border-radius:6px;border:1px solid var(--border);font-size:12px;"><span>Anak (1-12 tahun)</span><span style="color:var(--cyan);font-family:'Share Tech Mono',monospace;">70-120 BPM</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px;background:var(--dark3);border-radius:6px;border:1px solid var(--border);font-size:12px;"><span>Remaja (12-18 tahun)</span><span style="color:var(--cyan);font-family:'Share Tech Mono',monospace;">60-100 BPM</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px;background:var(--dark3);border-radius:6px;border:1px solid var(--border);font-size:12px;"><span>Dewasa (18+ tahun)</span><span style="color:var(--green);font-family:'Share Tech Mono',monospace;">60-100 BPM</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px;background:var(--dark3);border-radius:6px;border:1px solid var(--border);font-size:12px;"><span>Atlet terlatih</span><span style="color:var(--orange);font-family:'Share Tech Mono',monospace;">40-60 BPM</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STRES -->
+  <div class="section" id="sectionStres">
+    <div class="card purple">
+      <div class="card-title">🧠 CEK TINGKAT STRES</div>
+      <div class="card-sub">// Tekan & tahan area di bawah selama 10 detik</div>
+      <div class="stress-pad" id="stressPad">
+        <div style="font-size:40px;" id="stressEmoji">🖐️</div>
+        <div class="stress-pad-text" id="stressPadText">TEKAN & TAHAN</div>
+        <div class="stress-pad-sub" id="stressPadSub">Sentuh area ini dengan jari kamu</div>
+      </div>
+      <div style="text-align:center;margin:10px 0;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text);">INTENSITAS TEKANAN</div>
+      <div class="stress-meter" id="stressMeter">
+        <div class="stress-bar" id="sb1"></div>
+        <div class="stress-bar" id="sb2"></div>
+        <div class="stress-bar" id="sb3"></div>
+        <div class="stress-bar" id="sb4"></div>
+        <div class="stress-bar" id="sb5"></div>
+      </div>
+      <div class="stress-label-row"><span>TENANG</span><span>NORMAL</span><span>WASPADA</span><span>TINGGI</span><span>KRITIS</span></div>
+      <div class="result-box" id="stressResult">
+        <div class="result-num" id="stressScore" style="color:var(--purple);">--</div>
+        <div class="result-label">TINGKAT STRES</div>
+        <div class="result-center"><span class="result-status" id="stressBadge">--</span></div>
+        <div class="result-desc" id="stressDesc"></div>
+      </div>
+    </div>
+
+    <div class="card cyan">
+      <div class="card-title">💡 CARA MENGURANGI STRES</div>
+      <div style="display:grid;gap:8px;margin-top:6px;">
+        <div style="padding:10px;background:var(--dark3);border-radius:8px;border:1px solid var(--border);font-size:13px;line-height:1.6;">😮‍💨 <strong>Teknik pernapasan 4-7-8:</strong> Hirup 4 detik, tahan 7 detik, hembuskan 8 detik.</div>
+        <div style="padding:10px;background:var(--dark3);border-radius:8px;border:1px solid var(--border);font-size:13px;line-height:1.6;">🚶 <strong>Jalan kaki 10 menit</strong> terbukti menurunkan kortisol (hormon stres) secara signifikan.</div>
+        <div style="padding:10px;background:var(--dark3);border-radius:8px;border:1px solid var(--border);font-size:13px;line-height:1.6;">🎵 <strong>Dengarkan musik</strong> dengan tempo lambat dapat menurunkan tekanan darah dan detak jantung.</div>
+        <div style="padding:10px;background:var(--dark3);border-radius:8px;border:1px solid var(--border);font-size:13px;line-height:1.6;">💧 <strong>Minum air putih</strong> — dehidrasi ringan dapat meningkatkan kadar kortisol.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BMI -->
+  <div class="section" id="sectionBmi">
+    <div class="card orange">
+      <div class="card-title">⚖️ KALKULATOR BMI</div>
+      <div class="card-sub">// Body Mass Index — Indeks Massa Tubuh</div>
+      <div class="form-group"><label class="form-label">BERAT BADAN (KG)</label><input type="number" class="form-input" id="bmiBerat" placeholder="contoh: 65" min="1" max="300"></div>
+      <div class="form-group"><label class="form-label">TINGGI BADAN (CM)</label><input type="number" class="form-input" id="bmiTinggi" placeholder="contoh: 170" min="50" max="300"></div>
+      <div class="form-group"><label class="form-label">JENIS KELAMIN</label>
+        <select class="form-input" id="bmiGender">
+          <option value="pria">Pria</option>
+          <option value="wanita">Wanita</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">USIA</label><input type="number" class="form-input" id="bmiUsia" placeholder="contoh: 20" min="1" max="120"></div>
+      <button class="btn btn-orange" onclick="calcBMI()">HITUNG BMI</button>
+      <div class="result-box" id="bmiResult">
+        <div class="result-num" id="bmiNum" style="color:var(--orange);">--</div>
+        <div class="result-label">INDEKS MASSA TUBUH</div>
+        <div style="margin:10px 0;">
+          <div class="bmi-scale"><div class="bmi-marker" id="bmiMarker" style="left:0%;"></div></div>
+          <div class="bmi-labels"><span>Kurus</span><span>Normal</span><span>Lebih</span><span>Obese</span></div>
+        </div>
+        <div class="result-center"><span class="result-status" id="bmiBadge">--</span></div>
+        <div class="result-desc" id="bmiDesc"></div>
+        <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;text-align:center;">
+            <div style="font-family:'Orbitron',sans-serif;font-size:16px;color:var(--cyan);" id="beratIdeal">--</div>
+            <div style="font-size:10px;color:var(--text);font-family:'Share Tech Mono',monospace;">BERAT IDEAL (KG)</div>
+          </div>
+          <div style="background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;text-align:center;">
+            <div style="font-family:'Orbitron',sans-serif;font-size:16px;color:var(--green);" id="bmiKategori">--</div>
+            <div style="font-size:10px;color:var(--text);font-family:'Share Tech Mono',monospace;">KATEGORI</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KALORI -->
+  <div class="section" id="sectionKalori">
+    <div class="card green">
+      <div class="card-title">🔥 KALKULATOR KALORI</div>
+      <div class="card-sub">// Kebutuhan kalori harian kamu</div>
+      <div class="form-group"><label class="form-label">BERAT BADAN (KG)</label><input type="number" class="form-input" id="kalBerat" placeholder="65"></div>
+      <div class="form-group"><label class="form-label">TINGGI BADAN (CM)</label><input type="number" class="form-input" id="kalTinggi" placeholder="170"></div>
+      <div class="form-group"><label class="form-label">USIA (TAHUN)</label><input type="number" class="form-input" id="kalUsia" placeholder="20"></div>
+      <div class="form-group"><label class="form-label">JENIS KELAMIN</label>
+        <select class="form-input" id="kalGender">
+          <option value="pria">Pria</option>
+          <option value="wanita">Wanita</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">TINGKAT AKTIVITAS</label>
+        <select class="form-input" id="kalAktivitas">
+          <option value="1.2">😴 Tidak aktif (kerja duduk, tidak olahraga)</option>
+          <option value="1.375">🚶 Sedikit aktif (olahraga 1-3x/minggu)</option>
+          <option value="1.55">🏃 Cukup aktif (olahraga 3-5x/minggu)</option>
+          <option value="1.725">💪 Sangat aktif (olahraga 6-7x/minggu)</option>
+          <option value="1.9">🏋️ Ekstrem aktif (atlet, kerja fisik berat)</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">TUJUAN</label>
+        <select class="form-input" id="kalTujuan">
+          <option value="maintain">Mempertahankan berat</option>
+          <option value="turun">Menurunkan berat badan</option>
+          <option value="naik">Menaikkan berat badan</option>
+        </select>
+      </div>
+      <button class="btn btn-green" onclick="calcKalori()">HITUNG KEBUTUHAN KALORI</button>
+      <div class="result-box" id="kaloriResult">
+        <div class="calori-circle">
+          <div class="calori-num" id="kalNum">--</div>
+          <div class="calori-sub">KKAL/HARI</div>
+        </div>
+        <div class="macro-grid">
+          <div class="macro-box">
+            <div class="macro-num" id="kalProtein" style="color:var(--cyan);">--</div>
+            <div class="macro-label">PROTEIN (G)</div>
+          </div>
+          <div class="macro-box">
+            <div class="macro-num" id="kalKarbo" style="color:var(--orange);">--</div>
+            <div class="macro-label">KARBO (G)</div>
+          </div>
+          <div class="macro-box">
+            <div class="macro-num" id="kalLemak" style="color:var(--pink);">--</div>
+            <div class="macro-label">LEMAK (G)</div>
+          </div>
+        </div>
+        <div class="result-desc" id="kalDesc"></div>
+      </div>
+    </div>
+
+    <div class="card cyan">
+      <div class="card-title">🍽️ ESTIMASI KALORI MAKANAN</div>
+      <div style="display:grid;gap:6px;margin-top:6px;">
+        <div style="display:flex;justify-content:space-between;padding:8px;background:var(--dark3);border-radius:6px;border:1px solid var(--border);font-size:12px;"><span>🍚 Nasi putih 1 porsi</span><span style="color:var(--orange);font-family:'Share Tech Mono',monospace;">~240 kkal</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px;background:var(--dark3);border-radius:6px;border:1px solid var(--border);font-size:12px;"><span>🍗 Ayam goreng (1 potong)</span><span style="color:var(--orange);font-family:'Share Tech Mono',monospace;">~300 kkal</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px;background:var(--dark3);border-radius:6px;border:1px solid var(--border);font-size:12px;"><span>🥚 Telur rebus (1 butir)</span><span style="color:var(--orange);font-family:'Share Tech Mono',monospace;">~78 kkal</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px;background:var(--dark3);border-radius:6px;border:1px solid var(--border);font-size:12px;"><span>🍜 Mie instan (1 bungkus)</span><span style="color:var(--orange);font-family:'Share Tech Mono',monospace;">~350 kkal</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px;background:var(--dark3);border-radius:6px;border:1px solid var(--border);font-size:12px;"><span>🥛 Susu sapi (200ml)</span><span style="color:var(--orange);font-family:'Share Tech Mono',monospace;">~120 kkal</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px;background:var(--dark3);border-radius:6px;border:1px solid var(--border);font-size:12px;"><span>🍌 Pisang (1 buah)</span><span style="color:var(--orange);font-family:'Share Tech Mono',monospace;">~89 kkal</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px;background:var(--dark3);border-radius:6px;border:1px solid var(--border);font-size:12px;"><span>🧃 Teh manis (1 gelas)</span><span style="color:var(--orange);font-family:'Share Tech Mono',monospace;">~90 kkal</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIPS -->
+  <div class="section" id="sectionTips">
+    <button class="refresh-btn" onclick="loadTips()">🔄 REFRESH TIPS HARI INI</button>
+    <div id="tipsList"></div>
+  </div>
+
+</div>
+
+<script>
+// ===== UTILS =====
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+function switchTab(name,el){document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById('section'+name.charAt(0).toUpperCase()+name.slice(1)).classList.add('active');}
+
+// ===== HEART RATE =====
+let hrRunning=false,hrStream=null,hrInterval=null,hrData=[],wavePoints=[];
+const hrWaveLine=document.getElementById('hrLine');
+
+function toggleHR(){if(!hrRunning)startHR();else stopHR();}
+
+async function startHR(){
+  try{
+    hrData=[];wavePoints=[];hrRunning=true;
+    document.getElementById('btnStartHR').style.display='none';
+    document.getElementById('btnStopHR').style.display='block';
+    document.getElementById('hrResult').classList.remove('show');
+    document.getElementById('hrBpm').textContent='--';
+    document.getElementById('hrCircle').classList.add('active');
+    document.getElementById('cameraOverlay').style.display='block';
+    document.getElementById('cameraHint').style.display='none';
+
+    const constraints={video:{facingMode:'environment',width:160,height:120}};
+    hrStream=await navigator.mediaDevices.getUserMedia(constraints);
+    const video=document.getElementById('videoEl');
+    video.srcObject=hrStream;
+    video.style.display='block';
+    const canvas=document.getElementById('canvasEl');
+    const ctx=canvas.getContext('2d');
+    canvas.width=160;canvas.height=120;
+
+    let lastRed=0,peaks=[],lastPeakTime=0;
+    let measureStart=Date.now();
+    let frameCount=0;
+
+    hrInterval=setInterval(()=>{
+      if(!hrRunning)return;
+      ctx.drawImage(video,0,0,160,120);
+      const frame=ctx.getImageData(60,40,40,40);
+      let r=0,count=0;
+      for(let i=0;i<frame.data.length;i+=4){r+=frame.data[i];count++;}
+      const avgRed=r/count;
+      hrData.push(avgRed);
+      if(hrData.length>150)hrData.shift();
+
+      // Wave
+      frameCount++;
+      const normalized=Math.min(50,Math.max(0,50-(avgRed-150)*0.5));
+      wavePoints.push({x:frameCount*4,y:normalized});
+      if(wavePoints.length>75)wavePoints.shift();
+      const pts=wavePoints.map((p,i)=>`${i*4},${p.y}`).join(' ');
+      hrWaveLine.setAttribute('points',pts);
+
+      // Detect peaks (simple threshold)
+      const elapsed=(Date.now()-measureStart)/1000;
+      if(avgRed>lastRed+2&&Date.now()-lastPeakTime>400){
+        peaks.push(Date.now());lastPeakTime=Date.now();
+        if(peaks.length>2){
+          const intervals=[];
+          for(let i=1;i<peaks.length;i++)intervals.push(peaks[i]-peaks[i-1]);
+          const avgInterval=intervals.reduce((a,b)=>a+b)/intervals.length;
+          const bpm=Math.round(60000/avgInterval);
+          if(bpm>40&&bpm<220){
+            document.getElementById('hrBpm').textContent=bpm;
+          }
+        }
+        if(peaks.length>10)peaks.shift();
+      }
+      lastRed=avgRed;
+
+      // Auto stop setelah 30 detik
+      if(elapsed>=30)stopHR(true);
+    },100);
+
+    toast('📷 Kamera aktif — tempel jari ke kamera!');
+  }catch(e){
+    toast('❌ Izin kamera ditolak atau tidak tersedia');
+    stopHR();
+  }
+}
+
+function stopHR(auto=false){
+  hrRunning=false;
+  if(hrInterval)clearInterval(hrInterval);
+  if(hrStream)hrStream.getTracks().forEach(t=>t.stop());
+  document.getElementById('videoEl').style.display='none';
+  document.getElementById('cameraOverlay').style.display='none';
+  document.getElementById('cameraHint').style.display='block';
+  document.getElementById('cameraHint').textContent='📷 Pengukuran selesai';
+  document.getElementById('hrCircle').classList.remove('active');
+  document.getElementById('btnStartHR').style.display='block';
+  document.getElementById('btnStopHR').style.display='none';
+
+  const bpmText=document.getElementById('hrBpm').textContent;
+  const bpm=parseInt(bpmText);
+  if(bpm&&!isNaN(bpm)){
+    document.getElementById('hrFinalBpm').textContent=bpm;
+    let status,color,desc;
+    if(bpm<40){status='SANGAT RENDAH';color='#3498db';desc='Detak jantung sangat rendah. Segera konsultasi ke dokter.';}
+    else if(bpm<60){status='BRADIKARDI';color='#3498db';desc='Detak jantung di bawah normal. Bisa normal untuk atlet, tapi konsultasikan ke dokter jika ada gejala.';}
+    else if(bpm<=100){status='NORMAL ✓';color='#00ff88';desc='Detak jantung kamu dalam rentang normal. Jantung kamu sehat!';}
+    else if(bpm<=120){status='SEDIKIT TINGGI';color='#f39c12';desc='Detak jantung sedikit di atas normal. Istirahat dan hindari kafein.';}
+    else{status='TAKIKARDI';color='#ff2244';desc='Detak jantung terlalu tinggi. Istirahat sekarang dan konsultasi ke dokter jika berlanjut.';}
+    document.getElementById('hrStatusBadge').textContent=status;
+    document.getElementById('hrStatusBadge').style.background=color+'22';
+    document.getElementById('hrStatusBadge').style.border=`1px solid ${color}`;
+    document.getElementById('hrStatusBadge').style.color=color;
+    document.getElementById('hrDesc').textContent=desc;
+    document.getElementById('hrResult').classList.add('show');
+  }else{
+    toast('⚠️ Tidak terdeteksi — coba lagi dengan jari menutupi kamera');
+  }
+}
+
+// ===== STRESS =====
+let stressStartTime=null,stressInterval=null,stressDuration=0,stressLevel=0;
+const stressPad=document.getElementById('stressPad');
+
+stressPad.addEventListener('touchstart',(e)=>{e.preventDefault();startStress(e);},{passive:false});
+stressPad.addEventListener('touchend',(e)=>{e.preventDefault();endStress();},{passive:false});
+stressPad.addEventListener('mousedown',startStress);
+stressPad.addEventListener('mouseup',endStress);
+
+function startStress(e){
+  stressStartTime=Date.now();stressDuration=0;
+  document.getElementById('stressPadText').textContent='TAHAN...';
+  document.getElementById('stressEmoji').textContent='🤚';
+  stressPad.classList.add('pressing');
+  let bars=0;
+  stressInterval=setInterval(()=>{
+    stressDuration=(Date.now()-stressStartTime)/1000;
+    bars=Math.min(5,Math.floor(stressDuration));
+    for(let i=1;i<=5;i++){
+      const b=document.getElementById(`sb${i}`);
+      if(i<=bars)b.classList.add('fill');
+      else b.classList.remove('fill');
+    }
+    document.getElementById('stressPadSub').textContent=`${stressDuration.toFixed(1)}s / 10s`;
+    if(stressDuration>=10){endStress();clearInterval(stressInterval);}
+  },100);
+}
+
+function endStress(){
+  if(!stressStartTime)return;
+  clearInterval(stressInterval);
+  stressPad.classList.remove('pressing');
+  const dur=Math.min(10,(Date.now()-stressStartTime)/1000);
+  stressStartTime=null;
+  document.getElementById('stressPadText').textContent='TEKAN & TAHAN';
+  document.getElementById('stressEmoji').textContent='🖐️';
+  document.getElementById('stressPadSub').textContent='Sentuh area ini dengan jari kamu';
+
+  // Analisis durasi tekanan
+  let score,status,color,desc;
+  if(dur<1){score=95;status='SANGAT STRES';color='#ff2244';desc='Kamu sangat tidak sabar — indikasi stres tinggi. Coba teknik pernapasan dalam dan istirahat sejenak.';}
+  else if(dur<3){score=70;status='STRES TINGGI';color='#ff6b00';desc='Kamu tampak gelisah. Cobalah berjalan-jalan sebentar atau dengarkan musik santai.';}
+  else if(dur<6){score=45;status='STRES SEDANG';color='#f39c12';desc='Tingkat stres normal-sedang. Jaga pola tidur dan hindari overthinking.';}
+  else if(dur<9){score=20;status='TENANG';color='#00ff88';desc='Kamu cukup tenang. Pertahankan gaya hidup sehat dan manajemen waktu yang baik.';}
+  else{score=5;status='SANGAT TENANG ✓';color='#00f5ff';desc='Kamu sangat rileks! Kondisi mental kamu sangat baik. Pertahankan!';}
+
+  document.getElementById('stressScore').textContent=`${score}/100`;
+  document.getElementById('stressScore').style.color=color;
+  document.getElementById('stressBadge').textContent=status;
+  document.getElementById('stressBadge').style.background=color+'22';
+  document.getElementById('stressBadge').style.border=`1px solid ${color}`;
+  document.getElementById('stressBadge').style.color=color;
+  document.getElementById('stressDesc').textContent=desc;
+  document.getElementById('stressResult').classList.add('show');
+}
+
+// ===== BMI =====
+function calcBMI(){
+  const berat=parseFloat(document.getElementById('bmiBerat').value);
+  const tinggi=parseFloat(document.getElementById('bmiTinggi').value)/100;
+  const gender=document.getElementById('bmiGender').value;
+  const usia=parseInt(document.getElementById('bmiUsia').value);
+  if(!berat||!tinggi||tinggi<=0)return toast('⚠️ Isi berat dan tinggi badan dulu');
+  const bmi=berat/(tinggi*tinggi);
+  document.getElementById('bmiNum').textContent=bmi.toFixed(1);
+
+  // Marker position
+  const minBmi=14,maxBmi=40;
+  const pct=Math.min(100,Math.max(0,((bmi-minBmi)/(maxBmi-minBmi))*100));
+  document.getElementById('bmiMarker').style.left=pct+'%';
+
+  let status,color,desc,kategori;
+  if(bmi<17.5){status='SANGAT KURUS';color='#3498db';kategori='Sangat Kurus';desc='BMI sangat rendah. Kamu perlu meningkatkan asupan nutrisi dan konsultasi ke ahli gizi.';}
+  else if(bmi<18.5){status='KURUS';color='#5dade2';kategori='Kurus';desc='BMI di bawah normal. Tingkatkan asupan kalori dengan makanan bergizi.';}
+  else if(bmi<25){status='NORMAL ✓';color='#00ff88';kategori='Normal';desc='BMI kamu ideal! Pertahankan pola makan sehat dan olahraga rutin.';}
+  else if(bmi<30){status='KELEBIHAN BB';color='#f39c12';kategori='Overweight';desc='BMI sedikit di atas normal. Kurangi konsumsi makanan berlemak dan tingkatkan aktivitas fisik.';}
+  else if(bmi<35){status='OBESITAS I';color='#e67e22';kategori='Obese I';desc='Obesitas tingkat 1. Disarankan konsultasi ke dokter dan mulai program penurunan berat badan.';}
+  else{status='OBESITAS II';color='#ff2244';kategori='Obese II';desc='Obesitas tingkat 2. Segera konsultasi ke dokter untuk penanganan yang tepat.';}
+
+  document.getElementById('bmiBadge').textContent=status;
+  document.getElementById('bmiBadge').style.background=color+'22';
+  document.getElementById('bmiBadge').style.border=`1px solid ${color}`;
+  document.getElementById('bmiBadge').style.color=color;
+  document.getElementById('bmiDesc').textContent=desc;
+  document.getElementById('bmiKategori').textContent=kategori;
+
+  // Berat ideal
+  const minIdeal=18.5*tinggi*tinggi;
+  const maxIdeal=24.9*tinggi*tinggi;
+  document.getElementById('beratIdeal').textContent=`${minIdeal.toFixed(1)}-${maxIdeal.toFixed(1)}`;
+  document.getElementById('bmiResult').classList.add('show');
+}
+
+// ===== KALORI =====
+function calcKalori(){
+  const berat=parseFloat(document.getElementById('kalBerat').value);
+  const tinggi=parseFloat(document.getElementById('kalTinggi').value);
+  const usia=parseInt(document.getElementById('kalUsia').value);
+  const gender=document.getElementById('kalGender').value;
+  const aktivitas=parseFloat(document.getElementById('kalAktivitas').value);
+  const tujuan=document.getElementById('kalTujuan').value;
+  if(!berat||!tinggi||!usia)return toast('⚠️ Isi semua data dulu');
+
+  // Harris-Benedict
+  let bmr;
+  if(gender==='pria')bmr=88.362+(13.397*berat)+(4.799*tinggi)-(5.677*usia);
+  else bmr=447.593+(9.247*berat)+(3.098*tinggi)-(4.330*usia);
+  let tdee=bmr*aktivitas;
+
+  let kalori,desc;
+  if(tujuan==='turun'){kalori=tdee-500;desc='Defisit 500 kkal/hari untuk menurunkan ~0.5kg per minggu. Pastikan tidak kurang dari 1200 kkal (wanita) atau 1500 kkal (pria).';}
+  else if(tujuan==='naik'){kalori=tdee+300;desc='Surplus 300 kkal/hari untuk menaikkan berat badan secara sehat. Fokus pada protein dan latihan kekuatan.';}
+  else{kalori=tdee;desc='Ini adalah kebutuhan kalori untuk mempertahankan berat badan saat ini.';}
+
+  kalori=Math.round(kalori);
+  const protein=Math.round(berat*2);
+  const lemak=Math.round(kalori*0.25/9);
+  const karbo=Math.round((kalori-protein*4-lemak*9)/4);
+
+  document.getElementById('kalNum').textContent=kalori;
+  document.getElementById('kalProtein').textContent=protein;
+  document.getElementById('kalKarbo').textContent=karbo;
+  document.getElementById('kalLemak').textContent=lemak;
+  document.getElementById('kalDesc').textContent=desc;
+  document.getElementById('kaloriResult').classList.add('show');
+}
+
+// ===== TIPS =====
+const allTips=[
+  {cat:'HIDRASI',color:'cyan',icon:'💧',text:'Minum minimal 8 gelas air putih (2 liter) per hari. Mulai hari dengan segelas air hangat saat bangun tidur.'},
+  {cat:'TIDUR',color:'pink',icon:'😴',text:'Tidur 7-9 jam per malam. Tidur yang cukup meningkatkan imunitas, metabolisme, dan kesehatan mental.'},
+  {cat:'OLAHRAGA',color:'green',icon:'🏃',text:'Lakukan minimal 30 menit aktivitas fisik setiap hari. Bisa berupa jalan kaki, bersepeda, atau berenang.'},
+  {cat:'NUTRISI',color:'orange',icon:'🥦',text:'Konsumsi 5 porsi buah dan sayuran per hari. Variasikan warna makanan untuk mendapatkan nutrisi lengkap.'},
+  {cat:'MENTAL',color:'purple',icon:'🧘',text:'Luangkan 10 menit per hari untuk meditasi atau pernapasan dalam. Ini terbukti mengurangi stres dan kecemasan.'},
+  {cat:'POSTUR',color:'cyan',icon:'🪑',text:'Perbaiki postur duduk — punggung tegak, layar setinggi mata. Bangun dan regangkan tubuh setiap 1 jam.'},
+  {cat:'GULA DARAH',color:'orange',icon:'🍽️',text:'Makan 3x sehari dengan porsi teratur. Hindari melewatkan sarapan karena dapat meningkatkan nafsu makan berlebih.'},
+  {cat:'JANTUNG',color:'red',icon:'❤️',text:'Hindari rokok dan kurangi alkohol. Keduanya meningkatkan risiko penyakit jantung dan stroke secara signifikan.'},
+  {cat:'MATA',color:'cyan',icon:'👁️',text:'Ikuti aturan 20-20-20: setiap 20 menit layar, lihat objek sejauh 20 kaki (6m) selama 20 detik.'},
+  {cat:'IMUNITAS',color:'green',icon:'🛡️',text:'Konsumsi vitamin C dari buah jeruk, jambu, atau suplemen. Vitamin C meningkatkan sistem kekebalan tubuh.'},
+  {cat:'STRES',color:'pink',icon:'🎵',text:'Dengarkan musik favorit kamu. Penelitian menunjukkan musik dapat menurunkan kortisol (hormon stres) hingga 30%.'},
+  {cat:'TULANG',color:'orange',icon:'🥛',text:'Konsumsi kalsium 1000mg per hari dari susu, keju, tahu, atau brokoli untuk menjaga kesehatan tulang.'},
+  {cat:'PENCERNAAN',color:'green',icon:'🌿',text:'Konsumsi makanan tinggi serat seperti sayur, buah, dan biji-bijian untuk melancarkan pencernaan.'},
+  {cat:'PERNAPASAN',color:'cyan',icon:'🌬️',text:'Latihan pernapasan perut: hirup 4 detik, tahan 4 detik, hembuskan 4 detik. Lakukan 5x setiap pagi.'},
+  {cat:'GINJAL',color:'pink',icon:'💧',text:'Kurangi konsumsi garam berlebih. Asupan sodium tinggi dapat meningkatkan tekanan darah dan membebani ginjal.'},
+];
+
+function loadTips(){
+  const shuffled=[...allTips].sort(()=>Math.random()-0.5).slice(0,5);
+  const el=document.getElementById('tipsList');
+  el.innerHTML=shuffled.map(t=>`
+    <div class="tip-card ${t.color}">
+      <div class="tip-icon">${t.icon}</div>
+      <div class="tip-category">${t.cat}</div>
+      <div class="tip-text">${t.text}</div>
+    </div>`).join('');
+}
+
+loadTips();
+</script>
+</body>
+</html>
